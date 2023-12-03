@@ -9,6 +9,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 fun main() = application { Window(onCloseRequest = ::exitApplication) { app() } }
 
@@ -16,6 +20,23 @@ fun main() = application { Window(onCloseRequest = ::exitApplication) { app() } 
 
 fun DrawScope.paint() {
     drawCoordinates()
+
+    val r2 = 200f*200f;
+    drawFunSurf { (x*x + y*y) eq r2 }
+    drawFunSurf { (x*x - y*y) eq r2 }
+
+//    val c1 = Point(400f, 100f); drawFunSurf { (Point(x,y)-c1).len() eq 0f }
+//
+//    val c2 = Point(-215f, -30f)
+//
+//
+
+//    val D = (c1-c2).len() / 2
+//
+//    drawFunSurf {
+//        val p = Point(x,y)
+//        ( (p-c1).len() + (p-c2).len() ) eq D
+//    }
 
     drawFun{ y = x*x   / 100   }
     drawFun{ y = x*x*x / 50000 }
@@ -38,17 +59,51 @@ fun DrawScope.drawFun(dx: Float = 1f, radius: Float = 1f, clr: Color ? = null, f
 
     val center = with(size / 2F) { Offset(width, height) }
 
-    val poit = Point(-center.x, 0f)
+    val point = Point(-center.x, 0f)
 
-    while (poit.x < center.x) {
-        poit.f()
-        val screenPoint = Offset(poit.x + center.x, -poit.y + center.y)
+    while (point.x < center.x) {
+        point.f()
+        val screenPoint = Offset(point.x + center.x, -point.y + center.y)
         drawCircle(color, radius, screenPoint)
-        poit.x += dx
+        point.x += dx
     }
 }
 
-data class Point(var x: Float = 0f, var y: Float = 0f)
+fun DrawScope.drawFunSurf(d: Float = 1f, radius: Float = 1f, clr: Color ? = null, f: Surf.() -> Float?) {
+    val color = getNextColor(clr)
+
+    val center = with(size / 2F) { Offset(width, height) }
+
+    val p = Surf(-center.x, -center.y)
+    while (p.x < center.x) {
+        p.y = -center.y
+        while (p.y < center.y) {
+            val r = p.f()
+            if (r != null) {
+                val c = color.copy(alpha = 1 - r)
+                val screenPoint = Offset(p.x + center.x, -p.y + center.y)
+                drawCircle(c, radius, screenPoint)
+            }
+            p.y += d
+        }
+        p.x += d
+    }
+}
+
+
+data class Point(var x: Float = 0f, var y: Float = 0f) {
+    operator fun minus(p: Point) = Point(p.x - x, p.y - y)
+    fun len(): Float = sqrt(x*x + y*y)
+}
+
+private val precision = 2000f
+data class Surf(var x: Float = 0f, var y: Float = 0f) {
+    infix fun Float.eq(another: Float): Float? {
+        val r = abs(this - another)
+        if (r < precision) return r/precision
+        return null
+    }
+}
 
 private val colorNumber = AtomicInteger(0)
 private fun getNextColor(clr: Color?): Color {
