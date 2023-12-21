@@ -1,3 +1,5 @@
+package tga.functions
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Button
