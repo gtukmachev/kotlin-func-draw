@@ -1,8 +1,11 @@
 package tga.planets
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -14,66 +17,72 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.key
+import kotlinx.coroutines.*
 import kotlin.math.max
-import kotlin.math.min
 
-
-val s = 3.0;
-val TwoPi = Math.PI*2
-val halfPI = Math.PI/2
-val minusHalfPI = -halfPI
-var speed = 1.0
 private val bgClr = Color(0xFF443C38)
 
-
+var dt: Long = 1L// hours
+var simulationStepsPerSecond = 100
+val simulationDelay = (1000 / simulationStepsPerSecond).toLong()
 
 fun main() = application {
     val state = rememberWindowState(
-        position = WindowPosition(Alignment.Center), size = DpSize(1280.dp, 1280.dp)
+        position = WindowPosition(Alignment.Center), size = DpSize((2*1280).dp, 1280.dp)
     )
+
     Window(
         onCloseRequest = ::exitApplication,
-        state
+//        onKeyEvent = ::hotKeysHandler,
+        state = state
     ) { app() }
 }
 
-@Composable fun app() = MaterialTheme {
-    var x0 by remember { mutableStateOf(0.0) }
+//@OptIn(ExperimentalComposeUiApi::class)
+//private fun hotKeysHandler(keyEvent: KeyEvent): Boolean {
+//    return when (keyEvent.key) {
+//        Key.Spacebar -> { isSimulationActive = !isSimulationActive; false }
+//        else -> true
+//    }
+//}
 
-    LaunchedEffect(Unit) { while(true) { delay(10L); x0 -= speed } }
-//    Button(onClick = { paramsArray = generateParameters() }) { Text("Refresh") }
-    Canvas(modifier = Modifier.fillMaxSize()) { paint(x0) }
+var isSimulationActive: Boolean = false
+
+@Composable fun app() = MaterialTheme {
+    var t by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            if (isSimulationActive) simulationStep(tHoursAbsolute = t, dtHours = dt)
+            t += dt
+            delay(simulationDelay)
+        }
+    }
+
+    Column {
+        Button(onClick = { isSimulationActive = !isSimulationActive }) { Text( "run/pause" ) }
+        Canvas(modifier = Modifier.fillMaxSize()) { paint(t) }
+    }
+
 }
 
-
-const val zoom = 149.6e4/4.0
+const val zoom = 149.6e4/8
 val zoomRadius = earth.r / 15.0
 
-const val G = 6.67259e-11
-val Mm = earth.m * sun.m
-val GMm = G * Mm
 
-fun DrawScope.paint(x0: Double) {
+fun DrawScope.paint(t: Long) {
     drawCoordinates()
     val center = with(size / 2F) { Offset(width, height) }
-
     fun Vector.s(): Offset = Offset( (x/zoom).toFloat() + center.x, -(y/zoom).toFloat() + center.y)
 
-    val Rpow2: Double  = earth.p.lenPow2
-    val f: Double = GMm / Rpow2
-    val a = f / earth.m
-    val aVector = -earth.p.norm() * a
-
-    earth.speed += aVector
-    earth.p += earth.speed
-
     for (so in spaceObjects) {
-
         val r = max((so.r*so.rK/zoomRadius).toFloat(), 1f)
         drawCircle(so.color, r, so.p.s())
-        //drawLine(so.color, screenPoint)
     }
 
 }
