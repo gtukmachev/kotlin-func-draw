@@ -1,8 +1,8 @@
 package tga.planets
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -27,29 +27,33 @@ import kotlin.math.max
 
 private val bgClr = Color(0xFF443C38)
 
-var dt: Long = 1L// hours
-var simulationStepsPerSecond = 100
+var dt: Long = 60*60*10L// hours
+var simulationStepsPerSecond = 1000
 val simulationDelay = (1000 / simulationStepsPerSecond).toLong()
 
+@OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
     val state = rememberWindowState(
-        position = WindowPosition(Alignment.Center), size = DpSize((2*1280).dp, 1280.dp)
+        position = WindowPosition(Alignment.Center),
+        size = DpSize((2*1280).dp, 1400.dp),
     )
+
+    fun hotKeysHandler(keyEvent: KeyEvent): Boolean {
+        return when (keyEvent.key) {
+            Key.Escape -> { exitApplication(); false}
+            Key.Spacebar -> { isSimulationActive = !isSimulationActive; false }
+            else -> true
+        }
+    }
 
     Window(
         onCloseRequest = ::exitApplication,
-//        onKeyEvent = ::hotKeysHandler,
+        onKeyEvent = ::hotKeysHandler,
         state = state
     ) { app() }
-}
 
-//@OptIn(ExperimentalComposeUiApi::class)
-//private fun hotKeysHandler(keyEvent: KeyEvent): Boolean {
-//    return when (keyEvent.key) {
-//        Key.Spacebar -> { isSimulationActive = !isSimulationActive; false }
-//        else -> true
-//    }
-//}
+
+}
 
 var isSimulationActive: Boolean = false
 
@@ -58,20 +62,36 @@ var isSimulationActive: Boolean = false
 
     LaunchedEffect(Unit) {
         while (true) {
-            if (isSimulationActive) simulationStep(tHoursAbsolute = t, dtHours = dt)
-            t += dt
+            if (isSimulationActive) {
+                simulationStep(tHoursAbsolute = t, dtHours = dt)
+                t += dt
+            }
             delay(simulationDelay)
         }
     }
 
-    Column {
-        Button(onClick = { isSimulationActive = !isSimulationActive }) { Text( "run/pause" ) }
-        Canvas(modifier = Modifier.fillMaxSize()) { paint(t) }
+    Row {
+        Column(
+            modifier = Modifier
+                .width(500.dp)
+                .fillMaxHeight()
+                .background(color = Color(0xFF343434))
+        ) {
+            Button(onClick = { isSimulationActive = !isSimulationActive }) { Text( "run/pause" ) }
+        }
+        Column(
+            modifier = Modifier
+                //.width(500.dp)
+                .fillMaxHeight()
+                .fillMaxWidth()
+                .background(color = Color.DarkGray)
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) { paint(t) }
+        }
     }
-
 }
 
-const val zoom = 149.6e4/8
+val zoom = earth.p.x / 500
 val zoomRadius = earth.r / 15.0
 
 
@@ -90,7 +110,7 @@ fun DrawScope.paint(t: Long) {
 fun DrawScope.drawCoordinates() {
     val c = with(size / 2F) { Offset(width, height) }
 
-    drawRect(bgClr, Offset.Zero, size)
+    //drawRect(bgClr, Offset.Zero, size)
 
     drawLine(color = Color.Gray, Offset(0f, c.y), Offset(size.width, c.y))
     drawLine(color = Color.Gray, Offset(c.x, 0f), Offset(c.x, size.height))
