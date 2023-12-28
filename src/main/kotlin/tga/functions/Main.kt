@@ -1,4 +1,4 @@
-package tga.functions
+package tga.functions.tga.functions
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -87,7 +87,7 @@ fun DrawScope.paint(x0: Float) {
                 drawFun(radius = lRadius, clr = getNextColor(null).copy(alpha = lAlpha)) { y = params.wave(x, x0) + y0 }
             }
         }
-        drawFun(radius = sumRadius,clr=COLORS[iLine]){
+        drawFun(radius = sumRadius,clr= COLORS[iLine]){
             var r = 0.0
             for (params in paramsArray[iLine]) r += params.wave(x, x0)
             y = r.toFloat() + y0
@@ -154,7 +154,7 @@ fun DrawScope.drawFun(dx: Float = 1f, radius: Float = 1f, clr: Color ? = null, f
     while (point.x < center.x) {
         point.f()
         val screenPoint = Offset(point.x + center.x, -point.y + center.y)
-        val r = radius/2 + radius * (sin(point.x/babelsLen)+1)*babelsSize
+        val r = radius/2 + radius * (sin(point.x/ babelsLen)+1)* babelsSize
         drawCircle(color, r.toFloat(), screenPoint)
         point.x += dx
     }
@@ -213,7 +213,7 @@ private val precision = 2000f
 data class Surf(var x: Float = 0f, var y: Float = 0f) {
     infix fun Float.eq(another: Float): Float? {
         val r = abs(this - another)
-        if (r < precision) return r/precision
+        if (r < precision) return r/ precision
         return null
     }
 }
@@ -232,7 +232,7 @@ private val COLORS = arrayOf (Color(0xFFFFFC9B), Color(0xFF63E0C1), Color(0xFFF5
 
 data class WaveParams(val periodK: Double, val offset: Double, val h: Double) {
     fun wave(x: Float, x0: Float): Float {
-        val r = ((x-x0 + offset) * periodK)/(15f*s)
+        val r = ((x-x0 + offset) * periodK)/(15f* s)
         return (sin(r) * h).toFloat()
     }
 }

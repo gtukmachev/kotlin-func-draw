@@ -3,9 +3,7 @@ package tga.planets
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -34,7 +32,7 @@ import tga.functions.tga.planets.visual_state.toOffset
 
 
 var dt: Long = 60*30// 1/2 hours
-var simulationStepsPerSession = 128
+var simulationStepsPerSession = 120
 var simulationSessionsPerSecond = 1000
 val simulationDelayBetweenSessions = (1000 / simulationSessionsPerSecond).toLong()
 
@@ -63,17 +61,21 @@ fun main() = application {
 }
 
 var isSimulationActive: Boolean = false
+const val zoomRange = 300f
 
 @Composable fun app() = MaterialTheme {
     var planetsVisualState: VisualState by remember {
         mutableStateOf( spaceObjects.asVisualState(zoom = zoom, zoomRadius = zoomRadius) )
     }
 
+    var visualZoom:         Float   by remember { mutableStateOf( 1f    ) }
+    var isLogCoordinatesOn: Boolean by remember { mutableStateOf( false ) }
+
     LaunchedEffect(Unit) {
         while (true) {
             if (isSimulationActive) {
-                repeat(simulationStepsPerSession) { simulationStep(dtHours = dt) }
-                updateVisualState(planetsVisualState){ planetsVisualState = it }
+                repeat(simulationStepsPerSession) { simulationStep(dtSeconds = dt) }
+                updateVisualState(planetsVisualState) { planetsVisualState = it }
             }
             delay(simulationDelayBetweenSessions)
         }
@@ -84,9 +86,21 @@ var isSimulationActive: Boolean = false
             modifier = Modifier
                 .width(500.dp)
                 .fillMaxHeight()
-                .background(color = Color(0xFF343434))
+                .background(color = )
         ) {
-            Button(onClick = { isSimulationActive = !isSimulationActive }) { Text( "run/pause" ) }
+            Row{
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { isSimulationActive = !isSimulationActive }
+                ) { Text( "run/pause" ) }
+            }
+
+            Text(text = "Zoom: ${visualZoom}")
+            Slider(value = visualZoom, valueRange = 1f / zoomRange..1f * zoomRange, onValueChange = { visualZoom = it })
+
+            Text(text = "Linear/Log space: ${ if (isLogCoordinatesOn) "Logarithmic" else "Linear"  }")
+            Switch(checked = isLogCoordinatesOn, onCheckedChange = { isLogCoordinatesOn = it })
+
         }
         Column(
             modifier = Modifier
@@ -95,7 +109,7 @@ var isSimulationActive: Boolean = false
                 .fillMaxWidth()
                 .background(color = Color.DarkGray)
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) { paint(planetsVisualState) }
+            Canvas(modifier = Modifier.fillMaxSize()) { paint(planetsVisualState, visualZoom) }
         }
     }
 }
@@ -123,16 +137,16 @@ val tailStrokeStyle = Stroke(
     width = 1f
 )
 
-fun DrawScope.paint(planetsVisualState: VisualState) {
+fun DrawScope.paint(planetsVisualState: VisualState, visualZoom: Float) {
     drawCoordinates()
     
-    scale(scaleX = 1f, scaleY = -1f) {
+    scale(scaleX = 1f/visualZoom, scaleY = -1f/visualZoom) {
         translate(left = this.size.width/2, top = this.size.height/2) {
             //drawCircle(Color.Yellow, radius = 30f, Offset.Zero)
             for (i in planetsVisualState.bodies.indices) {
                 val planet = planetsVisualState.bodies[i]
                 val color = spaceObjects[i].color
-                drawCircle(color, planet.radius, planet.position)
+                drawCircle(color, planet.radius*visualZoom, planet.position)
 
                 val planetTail = Path()
                 planetTail.moveTo(planet.position.x, planet.position.y)
