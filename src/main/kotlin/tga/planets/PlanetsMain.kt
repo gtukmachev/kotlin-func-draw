@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
-//import androidx.compose.runtime.MutableState
 import kotlinx.coroutines.*
 import tga.functions.tga.planets.phisic_state.earth
 import tga.functions.tga.planets.phisic_state.simulationStep
@@ -34,11 +33,10 @@ import tga.functions.tga.planets.visual_state.asVisualState
 import tga.functions.tga.planets.visual_state.toOffset
 
 
-private val bgClr = Color(0xFF443C38)
-
-var dt: Long = 60*60*10L// hours
-var simulationStepsPerSecond = 1000
-val simulationDelay = (1000 / simulationStepsPerSecond).toLong()
+var dt: Long = 60*30// 1/2 hours
+var simulationStepsPerSession = 256
+var simulationSessionsPerSecond = 1000
+val simulationDelayBetweenSessions = (1000 / simulationSessionsPerSecond).toLong()
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
@@ -67,8 +65,6 @@ fun main() = application {
 var isSimulationActive: Boolean = false
 
 @Composable fun app() = MaterialTheme {
-    //var t by remember { mutableStateOf(0L) }
-
     var planetsVisualState: VisualState by remember {
         mutableStateOf( spaceObjects.asVisualState(zoom = zoom, zoomRadius = zoomRadius) )
     }
@@ -76,11 +72,10 @@ var isSimulationActive: Boolean = false
     LaunchedEffect(Unit) {
         while (true) {
             if (isSimulationActive) {
-                simulationStep(tHoursAbsolute = 1, dtHours = dt)
+                repeat(simulationStepsPerSession) { simulationStep(dtHours = dt) }
                 updateVisualState(planetsVisualState){ planetsVisualState = it }
-                //t += dt
             }
-            delay(simulationDelay)
+            delay(simulationDelayBetweenSessions)
         }
     }
 

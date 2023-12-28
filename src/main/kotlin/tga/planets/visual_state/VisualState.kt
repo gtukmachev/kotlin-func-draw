@@ -1,13 +1,13 @@
 package tga.functions.tga.planets.visual_state
 
 import androidx.compose.ui.geometry.Offset
-import tga.functions.tga.planets.phisic_state.SpaceObject
-import tga.functions.tga.planets.phisic_state.Vector
+import tga.functions.tga.planets.physics_state.SpaceObject
+import tga.functions.tga.planets.physics_state.Vector
 import kotlin.math.max
 
 
 private const val moveToMinDistance = 2f * 2f
-private const val tailLength = 2048
+private const val tailLength = 10*2048
 
 
 data class VisualState(

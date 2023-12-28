@@ -23,7 +23,10 @@ import kotlin.math.sqrt
 import kotlin.random.Random.Default.nextDouble
 
 
-val s = 3.0; val TwoPi = Math.PI*2; val halfPI = Math.PI/2; val minusHalfPI = -halfPI
+const val s = 3.0;
+const val TwoPi = Math.PI*2;
+const val halfPI = Math.PI/2;
+const val minusHalfPI = -halfPI
 
 var speed = 5f
 
@@ -74,7 +77,7 @@ fun generateParameters() = Array(lines) { il ->
 
 fun DrawScope.paint(x0: Float) {
     drawCoordinates()
-    var yd = size.height / lines
+    val yd = size.height / lines
     var y0 = ((lines.toDouble()/2.0)*yd + yd/2).toFloat()
 
     for (iLine in paramsArray.indices) {
