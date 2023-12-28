@@ -1,4 +1,4 @@
-package tga.planets
+package tga.functions.tga.planets.phisic_state
 
 import kotlin.math.sqrt
 
