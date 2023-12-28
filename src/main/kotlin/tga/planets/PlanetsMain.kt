@@ -24,9 +24,9 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import kotlinx.coroutines.*
-import tga.functions.tga.planets.phisic_state.earth
-import tga.functions.tga.planets.phisic_state.simulationStep
-import tga.functions.tga.planets.phisic_state.spaceObjects
+import tga.functions.tga.planets.physics_state.earth
+import tga.functions.tga.planets.physics_state.simulationStep
+import tga.functions.tga.planets.physics_state.spaceObjects
 import tga.functions.tga.planets.visual_state.VisualBody
 import tga.functions.tga.planets.visual_state.VisualState
 import tga.functions.tga.planets.visual_state.asVisualState
@@ -34,7 +34,7 @@ import tga.functions.tga.planets.visual_state.toOffset
 
 
 var dt: Long = 60*30// 1/2 hours
-var simulationStepsPerSession = 256
+var simulationStepsPerSession = 128
 var simulationSessionsPerSecond = 1000
 val simulationDelayBetweenSessions = (1000 / simulationSessionsPerSecond).toLong()
 
