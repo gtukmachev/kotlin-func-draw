@@ -1,8 +1,8 @@
-package tga.functions.tga.planets.visual_state
+package tga.planets.visual_state
 
 import androidx.compose.ui.geometry.Offset
-import tga.functions.tga.planets.physics_state.SpaceObject
-import tga.functions.tga.planets.physics_state.Vector
+import tga.planets.physics_state.SpaceObject
+import tga.planets.physics_state.Vector
 import kotlin.math.max
 
 
