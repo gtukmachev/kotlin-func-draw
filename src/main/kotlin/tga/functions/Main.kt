@@ -54,7 +54,7 @@ var sumRadius = 1f
 
 
 fun generateParameters() = Array(lines) { il ->
-    val conf: Config = ConfigFactory.parseFile(File("/home/grigory/projects/tmp/demo/src/main/resources/application.conf")).resolve()
+    val conf: Config = ConfigFactory.parseFile(File("src/main/resources/application.conf")).resolve()
     lines = conf.getInt("lines")
     nWaves = conf.getInt("nWaves")
     babelsSize = conf.getDouble("babelsSize")
@@ -77,8 +77,39 @@ fun generateParameters() = Array(lines) { il ->
 
 fun DrawScope.paint(x0: Float) {
     drawCoordinates()
+
+//    dynamicWaves(x0)
+//    findAllMatches_asField()
+
+
+
+
+    val r2 = 200f*200f;
+    drawFunSurf { (x*x + y*y) eq r2 }
+    drawFunSurf { (x*x - y*y) eq r2 }
+
+
+//    drawFun{ y = x*x   / 100   }
+//    drawFun{ y = x*x*x / 50000 }
+//    drawFun{ y = 10000 / x     }
+//    drawFun{ y = x             }
+}
+
+private fun DrawScope.findAllMatches_asField() {
+    drawField(radius = 0.5f, clr = Color(0xFFA9FFBE)) {
+        val r1 = sqrt(x * x + y * y)
+        val Wave1 = sin(minusHalfPI + r1)
+
+        val r2 = sqrt(x * x + y * y)
+        val Wave2 = sin(minusHalfPI + r2)
+
+        (Wave1 + Wave2 + 2.0) / 4.0
+    }
+}
+
+private fun DrawScope.dynamicWaves(x0: Float) {
     val yd = size.height / lines
-    var y0 = ((lines.toDouble()/2.0)*yd + yd/2).toFloat()
+    var y0 = ((lines.toDouble() / 2.0) * yd + yd / 2).toFloat()
 
     for (iLine in paramsArray.indices) {
         y0 -= yd
@@ -87,51 +118,12 @@ fun DrawScope.paint(x0: Float) {
                 drawFun(radius = lRadius, clr = getNextColor(null).copy(alpha = lAlpha)) { y = params.wave(x, x0) + y0 }
             }
         }
-        drawFun(radius = sumRadius,clr= COLORS[iLine]){
+        drawFun(radius = sumRadius, clr = COLORS[iLine]) {
             var r = 0.0
             for (params in paramsArray[iLine]) r += params.wave(x, x0)
             y = r.toFloat() + y0
         }
     }
-
-
-
-    /*
-        drawField(radius = 0.5f, clr=Color(0xFFA9FFBE)) {
-            val r1 = sqrt(x*x + y*y)/k1
-            val Wave1 = sin(minusHalfPI + r1)
-
-            val r2 = sqrt(x*x + y*y)/k2
-            val Wave2 = sin(minusHalfPI + r2)
-
-            (Wave1 + Wave2 + 2.0)/4.0
-        }
-    */
-
-
-
-//    val r2 = 200f*200f;
-//    drawFunSurf { (x*x + y*y) eq r2 }
-//    drawFunSurf { (x*x - y*y) eq r2 }
-
-//    val c1 = Point(400f, 100f); drawFunSurf { (Point(x,y)-c1).len() eq 0f }
-//
-//    val c2 = Point(-215f, -30f)
-//
-//
-
-
-//    val D = (c1-c2).len() / 2
-//
-//    drawFunSurf {
-//        val p = Point(x,y)
-//        ( (p-c1).len() + (p-c2).len() ) eq D
-//    }
-
-//    drawFun{ y = x*x   / 100   }
-//    drawFun{ y = x*x*x / 50000 }
-//    drawFun{ y = 10000 / x     }
-//    drawFun{ y = x             }
 }
 
 fun DrawScope.drawCoordinates() {

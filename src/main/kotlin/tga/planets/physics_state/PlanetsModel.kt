@@ -16,7 +16,8 @@ data class SpaceObject(
     var rK: Double = 1.0
 )
 
-val sun     = SpaceObject(0, m=1.98847e30,   r=696340.0, p= v(0,0), speed= v(0,0), Color(0xFFF9FF88), rK = 2e-2)
+val sunInitialMass = 1.98847e30
+val sun     = SpaceObject(0, m= sunInitialMass,   r=696340.0, p= v(0,0), speed= v(0,0), Color(0xFFF9FF88), rK = 2e-2)
 
 
 val mercury = SpaceObject(1, m=   0.32868e24, r= 2439.0, p= v( 57.911014e9, 0), speed= v(0.0, 47.870e3    ), Color(0xFFFFC797) )
@@ -36,10 +37,10 @@ val spaceObjects = arrayOf(
     earth,
     mars,
     jupiter,
-//    saturn,
-//    uran,
-//    neptun,
-//    pluton,
+    saturn,
+    uran,
+    neptun,
+    pluton,
 )
 val n = spaceObjects.size
 

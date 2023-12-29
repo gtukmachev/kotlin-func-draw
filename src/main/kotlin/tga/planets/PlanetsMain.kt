@@ -22,26 +22,19 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import kotlinx.coroutines.*
-import tga.planets.physics_state.earth
-import tga.planets.physics_state.pluton
-import tga.planets.physics_state.simulationStep
-import tga.planets.physics_state.spaceObjects
+import tga.planets.physics_state.*
 import tga.planets.visual_state.VisualBody
 import tga.planets.visual_state.VisualState
 import tga.planets.visual_state.asVisualState
 import tga.planets.visual_state.toOffset
-import tga.planets.zoom.ZoomType
+import tga.planets.zoom.Zoomers
 import kotlin.math.abs
 import kotlin.math.log2
 import kotlin.math.sqrt
 
 
-var dt: Long = 60*10// 1/2 hours
-var simulationStepsPerSession = 120
-var simulationSessionsPerSecond = 1000
-val simulationDelayBetweenSessions = (1000 / simulationSessionsPerSecond).toLong()
 
-val zoomType = ZoomType.square
+val zoomType =  Zoomers.log2.zoomer
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
@@ -73,12 +66,18 @@ const val zoomRange = 300f
 @Composable fun app() = MaterialTheme(
     colors = darkColors()
 ) {
+    var dt: Long                    by remember { mutableStateOf(60*30) }
+    var simulationStepsPerSession   by remember { mutableStateOf(120) }
+    var simulationSessionsPerSecond by remember { mutableStateOf(1000) }
+
+
     var planetsVisualState: VisualState by remember {
         mutableStateOf( spaceObjects.asVisualState(zoom = zoomType.initialScreenZoom, zoomRadius = zoomRadius) )
     }
 
     var visualZoom:         Float   by remember { mutableStateOf( 1f    ) }
     var isLogCoordinatesOn: Boolean by remember { mutableStateOf( false ) }
+    var sunMass:            Float by remember { mutableStateOf( 1f ) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -86,7 +85,7 @@ const val zoomRange = 300f
                 repeat(simulationStepsPerSession) { simulationStep(dtSeconds = dt) }
                 updateVisualState(planetsVisualState) { planetsVisualState = it }
             }
-            delay(simulationDelayBetweenSessions)
+            delay((1000 / simulationSessionsPerSecond).toLong() )
         }
     }
 
@@ -104,7 +103,23 @@ const val zoomRange = 300f
             }
 
             Text(text = "Zoom: ${visualZoom}")
-            Slider(value = visualZoom, valueRange = 0.1f..1f, onValueChange = { visualZoom = it })
+            Slider(value = visualZoom, valueRange = 0.1f..300f, onValueChange = { visualZoom = it })
+            Divider()
+            Text(text = "Sun mass k: ${sunMass}")
+            Slider(value = sunMass, valueRange = 0.1f..10f, onValueChange = {
+                sunMass = it;
+                sun.m = sunInitialMass * it
+                GM[sun.i] = G * sun.m
+
+            })
+            Divider()
+
+            Text(text = "dt seconds: $dt")
+            Slider(value = dt.toFloat(), valueRange = 1f..3600f*6, onValueChange = { dt = it.toLong() })
+
+            Text(text = "dt batch: $simulationStepsPerSession")
+            Slider(value = simulationStepsPerSession.toFloat(), valueRange = 1f..500f, onValueChange = { simulationStepsPerSession = it.toInt() })
+
 
             Text(text = "Linear/Log space: ${ if (isLogCoordinatesOn) "Logarithmic" else "Linear"  }")
             Switch(checked = isLogCoordinatesOn, onCheckedChange = { isLogCoordinatesOn = it })
@@ -141,9 +156,6 @@ fun updateVisualState(planetsVisualState: VisualState, stateChangeFunction: (Vis
 }
 
 
-val tailStrokeStyle = Stroke(
-    width = 1f
-)
 
 private fun Float.logScr() = when {
     this == 0f -> 0f
@@ -152,6 +164,10 @@ private fun Float.logScr() = when {
 }
 
 fun DrawScope.paint(planetsVisualState: VisualState, visualZoom: Float) {
+    val tailStrokeStyle = Stroke(
+        width = 1f * visualZoom
+    )
+
     drawCoordinates()
     
     scale(scaleX = 1f/visualZoom, scaleY = -1f/visualZoom) {
@@ -161,12 +177,14 @@ fun DrawScope.paint(planetsVisualState: VisualState, visualZoom: Float) {
             for (i in planetsVisualState.bodies.indices) {
                 val planet = planetsVisualState.bodies[i]
                 val color = spaceObjects[i].color
-                drawCircle(color, 15f*visualZoom, zoomType.transform(planet.position))
+                var zoomedOffset = zoomType.transform(planet.position)
+                drawCircle(color, 15f*visualZoom, zoomedOffset)
 
                 val planetTail = Path()
-                planetTail.moveTo(zoomType.transform(planet.position.x), zoomType.transform(planet.position.y))
+                planetTail.moveTo(zoomedOffset.x, zoomedOffset.y)
                 for (p in planet.tail) {
-                    planetTail.lineTo(zoomType.transform(p.x), zoomType.transform(p.y))
+                    zoomedOffset = zoomType.transform(p)
+                    planetTail.lineTo(zoomedOffset.x, zoomedOffset.y)
                 }
 
                 this.drawPath(path = planetTail, color = color, style = tailStrokeStyle)
