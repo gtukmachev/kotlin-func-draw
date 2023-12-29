@@ -23,12 +23,16 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import kotlinx.coroutines.*
 import tga.functions.tga.planets.physics_state.earth
+import tga.functions.tga.planets.physics_state.pluton
 import tga.functions.tga.planets.physics_state.simulationStep
 import tga.functions.tga.planets.physics_state.spaceObjects
 import tga.functions.tga.planets.visual_state.VisualBody
 import tga.functions.tga.planets.visual_state.VisualState
 import tga.functions.tga.planets.visual_state.asVisualState
 import tga.functions.tga.planets.visual_state.toOffset
+import kotlin.math.abs
+import kotlin.math.log2
+import kotlin.math.sqrt
 
 
 var dt: Long = 60*30// 1/2 hours
@@ -63,7 +67,9 @@ fun main() = application {
 var isSimulationActive: Boolean = false
 const val zoomRange = 300f
 
-@Composable fun app() = MaterialTheme {
+@Composable fun app() = MaterialTheme(
+    colors = darkColors()
+) {
     var planetsVisualState: VisualState by remember {
         mutableStateOf( spaceObjects.asVisualState(zoom = zoom, zoomRadius = zoomRadius) )
     }
@@ -86,7 +92,6 @@ const val zoomRange = 300f
             modifier = Modifier
                 .width(500.dp)
                 .fillMaxHeight()
-                .background(color = )
         ) {
             Row{
                 Button(
@@ -114,7 +119,10 @@ const val zoomRange = 300f
     }
 }
 
-val zoom = earth.p.x / 500
+val linearZoom = pluton.p.x / 1000
+val sqrtZoom = pluton.p.x / (1000*1000)
+val log2Zoom = pluton.p.x / 10000000000000000
+val zoom = sqrtZoom
 val zoomRadius = earth.r / 15.0
 
 fun updateVisualState(planetsVisualState: VisualState, stateChangeFunction: (VisualState) -> Unit) {
@@ -137,21 +145,37 @@ val tailStrokeStyle = Stroke(
     width = 1f
 )
 
+private fun Float.linearScr() = this
+private fun Float.sqrtScr() = when {
+    this == 0f -> 0f
+    this >0 -> sqrt(this)
+    else -> -sqrt(abs(this))
+}
+private fun Float.logScr() = when {
+    this == 0f -> 0f
+    this >0 -> log2(this*1000000+1)
+    else -> -log2(abs(this)*1000000+1)
+}
+
+private fun Float.scr() = this.sqrtScr()
+private fun Offset.scr() = Offset(x.scr(), y.scr())
+
 fun DrawScope.paint(planetsVisualState: VisualState, visualZoom: Float) {
     drawCoordinates()
     
     scale(scaleX = 1f/visualZoom, scaleY = -1f/visualZoom) {
         translate(left = this.size.width/2, top = this.size.height/2) {
+
             //drawCircle(Color.Yellow, radius = 30f, Offset.Zero)
             for (i in planetsVisualState.bodies.indices) {
                 val planet = planetsVisualState.bodies[i]
                 val color = spaceObjects[i].color
-                drawCircle(color, planet.radius*visualZoom, planet.position)
+                drawCircle(color, 15f*visualZoom, planet.position.scr())
 
                 val planetTail = Path()
-                planetTail.moveTo(planet.position.x, planet.position.y)
+                planetTail.moveTo(planet.position.x.scr(), planet.position.y.scr())
                 for (p in planet.tail) {
-                    planetTail.lineTo(p.x, p.y)
+                    planetTail.lineTo(p.x.scr(), p.y.scr())
                 }
 
                 this.drawPath(path = planetTail, color = color, style = tailStrokeStyle)
