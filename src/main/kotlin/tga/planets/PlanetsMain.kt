@@ -34,7 +34,7 @@ import kotlin.math.sqrt
 
 
 
-val zoomType =  Zoomers.log2.zoomer
+val zoomType =  Zoomers.sqrt.zoomer
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
@@ -66,18 +66,17 @@ const val zoomRange = 300f
 @Composable fun app() = MaterialTheme(
     colors = darkColors()
 ) {
-    var dt: Long                    by remember { mutableStateOf(60*30) }
-    var simulationStepsPerSession   by remember { mutableStateOf(120) }
-    var simulationSessionsPerSecond by remember { mutableStateOf(1000) }
 
+    var dt:                          Long    by remember { mutableStateOf(60*30 ) }
+    var simulationStepsPerSession:   Int     by remember { mutableStateOf(120   ) }
+    var simulationSessionsPerSecond: Int     by remember { mutableStateOf(1000  ) }
+    var visualZoom:                  Float   by remember { mutableStateOf( 1f   ) }
+    var isLogCoordinatesOn:          Boolean by remember { mutableStateOf( false) }
+    var sunMass:                     Float   by remember { mutableStateOf( 1f   ) }
 
     var planetsVisualState: VisualState by remember {
         mutableStateOf( spaceObjects.asVisualState(zoom = zoomType.initialScreenZoom, zoomRadius = zoomRadius) )
     }
-
-    var visualZoom:         Float   by remember { mutableStateOf( 1f    ) }
-    var isLogCoordinatesOn: Boolean by remember { mutableStateOf( false ) }
-    var sunMass:            Float by remember { mutableStateOf( 1f ) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -90,40 +89,15 @@ const val zoomRange = 300f
     }
 
     Row {
-        Column(
-            modifier = Modifier
-                .width(250.dp)
-                .fillMaxHeight()
-        ) {
-            Row{
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { isSimulationActive = !isSimulationActive }
-                ) { Text( "run/pause" ) }
-            }
-
-            Text(text = "Zoom: ${visualZoom}")
-            Slider(value = visualZoom, valueRange = 0.1f..300f, onValueChange = { visualZoom = it })
-            Divider()
-            Text(text = "Sun mass k: ${sunMass}")
-            Slider(value = sunMass, valueRange = 0.1f..10f, onValueChange = {
-                sunMass = it;
-                sun.m = sunInitialMass * it
-                GM[sun.i] = G * sun.m
-
-            })
-            Divider()
-
-            Text(text = "dt seconds: $dt")
-            Slider(value = dt.toFloat(), valueRange = 1f..3600f*6, onValueChange = { dt = it.toLong() })
-
-            Text(text = "dt batch: $simulationStepsPerSession")
-            Slider(value = simulationStepsPerSession.toFloat(), valueRange = 1f..500f, onValueChange = { simulationStepsPerSession = it.toInt() })
-
-
-            Text(text = "Linear/Log space: ${ if (isLogCoordinatesOn) "Logarithmic" else "Linear"  }")
-            Switch(checked = isLogCoordinatesOn, onCheckedChange = { isLogCoordinatesOn = it })
-
+        Column(modifier = Modifier.width(250.dp).fillMaxHeight()) {
+            settingsPanel(
+                dt,                          { dt = it },
+                simulationStepsPerSession,   { simulationStepsPerSession = it },
+                simulationSessionsPerSecond, { simulationSessionsPerSecond = it },
+                visualZoom,                  { visualZoom = it },
+                isLogCoordinatesOn,          { isLogCoordinatesOn = it },
+                sunMass,                     { sunMass = it },
+            )
         }
         Column(
             modifier = Modifier
@@ -154,8 +128,6 @@ fun updateVisualState(planetsVisualState: VisualState, stateChangeFunction: (Vis
         stateChangeFunction(VisualState(newVisualBodyStates))
     }
 }
-
-
 
 private fun Float.logScr() = when {
     this == 0f -> 0f
