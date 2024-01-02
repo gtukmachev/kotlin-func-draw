@@ -15,6 +15,8 @@ import androidx.compose.ui.window.application
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.delay
+import tga.components.math_surface.drawFun
+import tga.components.math_surface.mathCanvas
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
@@ -37,9 +39,9 @@ fun main() = application { Window(onCloseRequest = ::exitApplication) { app() } 
     var x0 by remember { mutableStateOf(0f) }
 
 
-    LaunchedEffect(Unit) { while(true) { delay(10L); x0 -= speed } }
+    //LaunchedEffect(Unit) { while(true) { delay(10L); x0 -= speed } }
     Button(onClick = { paramsArray = generateParameters() }) { Text("Refresh") }
-    Canvas(modifier = Modifier.fillMaxSize()) { paint(x0) }
+    mathCanvas { paint(x0) }
 }
 
 var lines = 5
@@ -76,7 +78,6 @@ fun generateParameters() = Array(lines) { il ->
 }
 
 fun DrawScope.paint(x0: Float) {
-    drawCoordinates()
 
 //    dynamicWaves(x0)
 //    findAllMatches_asField()
@@ -85,8 +86,8 @@ fun DrawScope.paint(x0: Float) {
 
 
     val r2 = 200f*200f;
-    drawFunSurf { (x*x + y*y) eq r2 }
-    drawFunSurf { (x*x - y*y) eq r2 }
+//    drawFunSurf { (x*x + y*y) eq r2 }
+//    drawFunSurf { (x*x - y*y) eq r2 }
 
 
 //    drawFun{ y = x*x   / 100   }
@@ -107,6 +108,7 @@ private fun DrawScope.findAllMatches_asField() {
     }
 }
 
+/*
 private fun DrawScope.dynamicWaves(x0: Float) {
     val yd = size.height / lines
     var y0 = ((lines.toDouble() / 2.0) * yd + yd / 2).toFloat()
@@ -125,7 +127,7 @@ private fun DrawScope.dynamicWaves(x0: Float) {
         }
     }
 }
-
+*/
 fun DrawScope.drawCoordinates() {
     val c = with(size / 2F) { Offset(width, height) }
 
@@ -136,21 +138,6 @@ fun DrawScope.drawCoordinates() {
 }
 
 
-fun DrawScope.drawFun(dx: Float = 1f, radius: Float = 1f, clr: Color ? = null, f: Point.() -> Unit) {
-    val color = getNextColor(clr)
-
-    val center = with(size / 2F) { Offset(width, height) }
-
-    val point = Point(-center.x, 0f)
-
-    while (point.x < center.x) {
-        point.f()
-        val screenPoint = Offset(point.x + center.x, -point.y + center.y)
-        val r = radius/2 + radius * (sin(point.x/ babelsLen)+1)* babelsSize
-        drawCircle(color, r.toFloat(), screenPoint)
-        point.x += dx
-    }
-}
 
 fun DrawScope.drawFunSurf(d: Float = 1f, radius: Float = 1f, clr: Color ? = null, f: Surf.() -> Float?) {
     val color = getNextColor(clr)
@@ -194,11 +181,6 @@ fun DrawScope.drawField(d: Float = 1f, radius: Float = 0.5f, clr: Color ? = null
         }
         p.x += d
     }
-}
-
-data class Point(var x: Float = 0f, var y: Float = 0f) {
-    operator fun minus(p: Point) = Point(p.x - x, p.y - y)
-    fun len(): Float = sqrt(x*x + y*y)
 }
 
 private val precision = 2000f

@@ -65,6 +65,6 @@ fun fullSqrt(x: Float): Float = safe(x){ sqrt(it) }
 
 fun safe(x: Float, f: (Float) -> Float): Float = when {
     x == 0f -> x
-    x  > 0f -> f(x)
+    x  > 0f -> f(x * 100_000_000)
     else    -> -f(abs(x))
 }
